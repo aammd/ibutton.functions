@@ -17,45 +17,37 @@ source('ibutton.functions.R')
 
 ibutton.data <- read.ibutton.folder("example.data/")
 
-## which ones failed?
+## which ones failed? you could just check the number of rows in each, and pick 
+## the ones which are suspiciously short, indicating that the ibutton stopped 
+## recording temperature.  This function automates this process to make it a bit
+## more objective: it points out ones which recorded less than the median number
+## of datapoints for the experiment.  It assumes that all the ibuttons were
+## supposed to run for equal amounts of time
+id.broken(ibutton.data)
 
-lengths.A <- sapply(blkA,nrow)
-lengths.B <- sapply(blkB,nrow)
-lengths.C <- sapply(blkC,nrow)
+## get the lengths for your own use:
+sapply(ibutton.data,nrow)
 
-## let's see the head of the ibuttons which failed define "file" as less than
-## 1500 (close to the maximum duration of all the ibuttons)
-lapply(blkA[which(lengths.A<1500)],head)
-lapply(blkB[which(lengths.B<1500)],head)
-which(lengths.C<1500)
+## sometimes, fieldworkers record the data incorrectly -- for example, one 
+## common mistake is to save data from the same ibutton twice with different 
+## filenames.  However, each ibutton has a unique registration number.  check 
+## for any number >1 in this table to identify this error. Additionally, if you
+## recorded the registration numbers (written on the back of the ibuttons) you
+## could use this to get them from the datafiles themselves
 
-apply(blkC,head)
+table(get.registration.numbers("example.data/"))
 
-## automate this process: which ibuttons recorded less than the median number of
-## datapoints for that temporal block?
-id.broken(blkA)
-id.broken(blkB)
-id.broken(blkC)
+## correct the dates and make dataframe 
+## Now that the data is checked, this function takes the list of ibuttons and
+## combines them together.  It also reformats the "Date.Time" variable, into a
+## format that R recognizes as a date and time.
+ibutton.dataframe <- ibuttons.to.data.frame(ibutton.data)
+head(ibutton.dataframe)
+summary(ibutton.dataframe)
 
-## 10a and 15a seems to be 
-
-## check for people recording data from the same ibutton in files with different names.
-
-table(get.registration.numbers("./Costa Rica Data loggers 2012/Time Block A/"))
-table(get.registration.numbers("./Costa Rica Data loggers 2012/Time Block B/"))
-table(get.registration.numbers("./Costa Rica Data loggers 2012/Time Block c/"))
-
-## correct the dates and make dataframe
-blockA.dataframe <- ibuttons.to.data.frame(blkA)
-blockB.dataframe <- ibuttons.to.data.frame(blkB)
-blockC.dataframe <- ibuttons.to.data.frame(blkC)
-head(blockB.dataframe)
-
-## graphing.  must be improved.
-with(subset(blockA.dataframe,ibutton=="10a"),plot(Date.Time,Value,type="l"))
-#with(data2,tapply(labels,plot(time,Value,type="l")))
-
-for(i in levels(blockA.dataframe$ibutton)){
-  x <- which(blockA.dataframe$ibutton==i)
-  lines(blockA.dataframe$Date.Time[x],blockA.dataframe$Value[x])
+## Here are some ways to graph this data:
+with(subset(ibutton.dataframe,ibutton=="10a"),plot(Date.Time,Value,type="n"))
+for(i in levels(ibutton.dataframe$ibutton)){
+  x <- which(ibutton.dataframe$ibutton==i)
+  lines(ibutton.dataframe$Date.Time[x],ibutton.dataframe$Value[x])
 }
